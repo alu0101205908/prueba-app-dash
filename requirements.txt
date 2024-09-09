@@ -2,6 +2,7 @@ altair==5.4.1
 dash==2.7.0
 dash_bootstrap_components==1.5.0
 dash_vega_components==0.10.0
+fiona==1.9.4
 geopandas==0.14.0
 numpy==1.24.4
 pandas==2.2.2
