@@ -1,61 +1,43 @@
-import dash
-import pandas as pd
-from dash import Dash, dash_table, dcc, html, Input, Output, State
-import plotly.express as px
+import dash_bootstrap_components as dbc
+from dash import Dash, dcc, html, Input, Output
+import dash_vega_components as dvc
+from utils.dashboard_utils import *
 
-app = Dash(__name__)
+alt.data_transformers.disable_max_rows()
+app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 
-df = px.data.gapminder()
+app.layout = dbc.Container(fluid=True,
+    children=[
+    dbc.Row([
+        dbc.Col(html.H1("Producción vitinicola y avisos fitosanitarios"), className="text-center mb-4")
+    ]),
 
-range_slider = dcc.RangeSlider(
-    value=[1987, 2007],
-    step=5,
-    marks={i: str(i) for i in range(1952, 2012, 5)},
-)
-
-dtable = dash_table.DataTable(
-    columns=[{"name": i, "id": i} for i in sorted(df.columns)],
-    sort_action="native",
-    page_size=10,
-    style_table={"overflowX": "auto"},
-)
-
-download_button = html.Button("Download Filtered CSV", style={"marginTop": 20})
-download_component = dcc.Download()
-
-app.layout = html.Div(
-    [
-        html.H2("Gapminder Data Download", style={"marginBottom": 20}),
-        download_component,
-        range_slider,
-        download_button,
-        dtable,
-    ]
-)
-
-
-@app.callback(
-    Output(dtable, "data"),
-    Input(range_slider, "value"),
-)
-def update_table(slider_value):
-    if not slider_value:
-        return dash.no_update
-    dff = df[df.year.between(slider_value[0], slider_value[1])]
-    return dff.to_dict("records")
-
-
-@app.callback(
-    Output(download_component, "data"),
-    Input(download_button, "n_clicks"),
-    State(dtable, "derived_virtual_data"),
-    prevent_initial_call=True,
-)
-def download_data(n_clicks, data):
-    dff = pd.DataFrame(data)
-    return dcc.send_data_frame(dff.to_csv, "filtered_csv.csv")
-
+    dbc.Row([
+        dbc.Col([
+            dvc.Vega(
+                id="columnChartTin",
+                opt={"renderer": "svg", "actions": False},
+                spec=columnChartTin.to_dict(),
+                style={'width': '100%', 'height': '100%'}
+            ),
+        ], width=4),
+        dbc.Col([
+            dcc.Graph(
+                id='mapa',
+                figure=mapaChart
+            )
+        ], width=4),
+        dbc.Col([
+            dvc.Vega(
+                id="columnChartBlan",
+                opt={"renderer": "svg", "actions": False},
+                spec=columnChartBlan.to_dict(),
+                style={'width': '100%', 'height': '100%'}
+            )
+        ], width=4)
+    ])
+])
 
 if __name__ == "__main__":
     app.run_server(debug=True)
